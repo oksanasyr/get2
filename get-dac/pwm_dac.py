@@ -17,7 +17,7 @@ class PWM_DAC:
     def deinit(self):
         self.pwm.stop()
         GPIO.output(self.gpio_pin, 0)
-        gpio.cleanup()
+        GPIO.cleanup()
 
 
     def set_voltage(self, voltage):
@@ -42,4 +42,4 @@ if __name__ == "__main__":
             except ValueError:
                 print("Вы ввели не число")
     finally:
-        dac.deinit())
+        dac.deinit()
