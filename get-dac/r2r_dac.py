@@ -16,7 +16,6 @@ class R2R_DAC:
     def set_number(self, number):
         number = int(number)
         bits = [int(bit) for bit in bin(number)[2:].zfill(8)]
-        bits = bits[::-1]
         GPIO.output(self.gpio_bits, bits)
         if self.verbose:
             print(f"Число ЦАП :{number}, Биты: {bits}\n")
