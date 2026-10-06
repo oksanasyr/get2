@@ -13,12 +13,11 @@ class MCP4725:
         self.bus.close()
     
     def set_number(self, number):
-        if not isinstance((number, int):
+        if not isinstance(number, int):
             print("На вход можно подавать только целые числа")
-            return
-        if not (0 <= voltage <= 4095):
+        if not (0 <= number <= 4095):
             print("Число выходит за разрядность MCP4725 (12 bit ) ")
-            return
+
         first_byte = self.wm | self.pds | (number >> 8)
         second_byte = number & 0xFF
         self.bus.write_byte_data(self.address, first_byte, second_byte)
@@ -27,23 +26,25 @@ class MCP4725:
             print(f"число: {number},отправленные по I2C данные : [0x{(self.address << 1):02X}, 0x{first_byte:02X}, 0x{second_byte:02X}]\n")
     
     def set_voltage(self, voltage):
-        if not (0.0 <= voltage <= self.dynamic_range):
-            print(f"Напряжение выходит за динамический диапазон ЦАП (0.00 - {self.dynamic_range:.2f} B)")
+        max_voltage = 3.3
+        max_value = 4095
+        if not (0.0 <= voltage <= max_voltage):
+            print(f"Напряжение выходит за динамический диапазон ЦАП (0.00 - {max_voltage:.2f} B)")
             print( "Устанавливаем 0.0 В")
             self.set_number(0)
             return 
         
-        number = int( voltage / self.dynamic_range *4095)
+        number = int( voltage / max_voltage *4095)
         self.set_number(number) 
 
-    if __name__ == "__main__":
-        dac = R2R_DAC([16, 20, 21, 25, 26, 17, 27, 22], 3.183, True)
-        try:
-            while True:
-                try:
-                    voltage = float(input("Введите нпряжение в вольтах: "))
-                    dac.set_voltage(voltage)
-                except ValueError:
-                    print("Вы ввели не число")
-        finally:
-            dac.deinit()      
+if __name__ == "__main__":
+    dac = R2R_DAC([16, 20, 21, 25, 26, 17, 27, 22], 3.183, True)
+    try:
+        while True:
+            try:
+                voltage = float(input("Введите нпряжение в вольтах: "))
+                dac.set_voltage(voltage)
+            except ValueError:
+                print("Вы ввели не число")
+    finally:
+        dac.deinit()      
