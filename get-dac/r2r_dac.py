@@ -44,4 +44,4 @@ if __name__ == "__main__":
                 print("Вы ввели не число")
     finally:
         dac.deinit()
-    
+        
