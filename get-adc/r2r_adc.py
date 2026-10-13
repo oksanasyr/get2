@@ -19,31 +19,27 @@ class R2R_ADC:
     def number_to_dac(self, number):
         number = max(0, min(255, int(number)))
         bits = [int(bit) for bit in bin(number)[2:].zfill(8)]
-        GPIO.output(self.gpio_bits, bits)
+        GPIO.output(self.bits_gpio, bits)
 
     def sequential_counting_adc(self):
         for number in range(256):
             self.number_to_dac(number)
             time.sleep(self.compare_time)
+
             if not GPIO.input(self.comp_gpio):
                 if self.verbose:
-                    print("Сработал компаратор на числе: {number}")
+                    print(f"Сработал компаратор на числе: {number}")
                 return number
         return 255
 
-    def set_voltage(self, voltage):
+    def get_voltage(self):
         number = self.sequential_counting_adc()
         voltage = number/ 255 * self.dynamic_range
 
         if self.verbose:
             print(f"Число ЦАП :{number}, Напряжение: {voltage:.3f}B")
+
         return voltage
-
-        number = int(voltage / self.dynamic_range * 255)
-        self.set_number(number)
-
-        if self.verbose:
-            print(f"Напряжение: {voltage:.2f}B")
 
 
 
@@ -53,9 +49,10 @@ if __name__ == "__main__":
 
     try:
         while True:
-            voltage = adc.get_sc_voltage()
+            voltage = adc.get_voltage()
             print(f"Измерение напряжения: {voltage:.3f} B\n")
-    except ValueError:
-        print("Вы ввели не число")
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        print("\nИзмерение остановлено")
     finally:
         adc.deinit()  
