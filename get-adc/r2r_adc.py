@@ -1,58 +1,49 @@
-import RPi.GPIO as GPIO
 import time
+import RPi.GPIO as gpio
 
 class R2R_ADC:
-    def __init__(self, dynamic_range, compare_time = 0.005, verbose = False):
+    def __init__ (self, dynamic_range, compare_time = 0.01, verbose = False):
         self.dynamic_range = dynamic_range
         self.verbose = verbose
         self.compare_time = compare_time
+
         self.bits_gpio = [26, 20, 19, 16, 13, 12, 25, 11]
         self.comp_gpio = 21
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.bits_gpio, GPIO.OUT, initial = 0)
-        GPIO.setup(self.comp_gpio, GPIO.IN)
 
-    def deinit(self): 
-        GPIO.output(self.bits_gpio, 0)
-        GPIO.cleanup()
+        gpio.setmode(gpio.BCM)
+        gpio.setup(self.bits_gpio, gpio.OUT, initial = 0)
+        gpio.setup(self.comp_gpio, gpio.IN)
+
+    def deinit(self):
+        gpio.output(self.bits_gpio, 0)
+        gpio.cleanup()
 
     def number_to_dac(self, number):
-        number = max(0, min(255, int(number)))
-        bits = [int(bit) for bit in bin(number)[2:].zfill(8)]
-        GPIO.output(self.bits_gpio, bits)
+        number = [int(i) for i in bin(number)[2:].zfill(8)]
+        gpio.output(self.bits_gpio, number)
 
     def sequential_counting_adc(self):
-        for number in range(256):
+        max_number = 2**len(self.bits_gpio)-1
+        for number in range(max_number+1):
             self.number_to_dac(number)
             time.sleep(self.compare_time)
 
-            if not GPIO.input(self.comp_gpio):
-                if self.verbose:
-                    print(f"Сработал компаратор на числе: {number}")
+            if gpio.input(self.comp_gpio) == 1:
                 return number
-        return 255
+        return max_number
 
-    def get_voltage(self):
+    def get_sc_voltage(self):
         number = self.sequential_counting_adc()
-        voltage = number/ 255 * self.dynamic_range
-
+        voltage = number / (2**len(self.bits_gpio)-1) * self.dynamic_range
         if self.verbose:
-            print(f"Число ЦАП :{number}, Напряжение: {voltage:.3f}B")
-
+            print(f"Число {number}, нарпяжение: {voltage:.3f} В")
         return voltage
 
 
-
-
 if __name__ == "__main__":
-    adc = R2R_ADC(3.183, 0.005, True)
-
+    adc = R2R_ADC(3.3, verbose=False)
     try:
         while True:
-            voltage = adc.get_voltage()
-            print(f"Измерение напряжения: {voltage:.3f} B\n")
-            time.sleep(0.5)
-    except KeyboardInterrupt:
-        print("\nИзмерение остановлено")
+             voltage = adc.get_sc_voltage()
     finally:
-        adc.deinit()  
+        adc.deinit()
